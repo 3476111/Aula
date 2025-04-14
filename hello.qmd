@@ -1,0 +1,74 @@
+---
+title: "Gabrielle Mariana Moreira"
+format: html
+editor: visual
+---
+
+```{r}
+#| label: load-packages
+#| include: false
+
+library(tidyverse)
+library(WDI)
+
+accesstoelectricity <- WDI(country = 'all',
+                           indicator = 'EG.ELC.ACCS.ZS')
+
+accesstoelectricitybr <-  WDI(country = 'BR',
+                              indicator = 'EG.ELC.ACCS.ZS')
+
+accesstoelectricity2010 <- WDI(country = 'all',
+                               indicator = 'EG.ELC.ACCS.ZS',
+                               start = 2010, end = 2010)
+
+```
+
+## Variável
+
+A variável trata do acesso a eletricidade.
+
+## Gráfico com dados em painel
+
+O gráfico mostra o acesso geral a eletricidade no mundo.
+
+```{r}
+#| label: accesstoelectricity
+#| warning: false
+#| echo: false
+
+ggplot(accesstoelectricity,
+                          mapping = aes(y = EG.ELC.ACCS.ZS,
+                                        x = year)) +
+  geom_point()
+```
+
+## Gráfico com dados em painel
+
+O gráfico mostra o acesso a eletricidade no Brasil
+
+```{r}
+#| label: accesstoelectricitybr
+#| warning: false 
+#| echo: false  
+ 
+ ggplot(accesstoelectricitybr,
+                            mapping = aes(y = EG.ELC.ACCS.ZS,
+                                          x = year)) +
+  geom_point()
+
+```
+
+## Gráfico com dados em painel
+
+Esse gráfico mostra o acesso a eletricidade no ano de 2010.
+
+```{r}
+#| label: accesstoelectricity2010 
+#| warning: false  
+#| echo: false      
+  
+ ggplot(accesstoelectricity2010,
+                              mapping = aes(y = EG.ELC.ACCS.ZS,
+                                            x = year)) +
+  geom_point()
+```
