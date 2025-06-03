@@ -10,88 +10,39 @@ editor: visual
 #| label: load-packages
 #| include: false
 
+library(GetBCBData)
 library(tidyverse)
-library(WDI)
-
-accesstoelectricity <- WDI(country = 'all',
-                           indicator = 'EG.ELC.ACCS.ZS')
-
-accesstoelectricitybr <-  WDI(country = 'BR',
-                              indicator = 'EG.ELC.ACCS.ZS')
-
-accesstoelectricity2010 <- WDI(country = 'all',
-                               indicator = 'EG.ELC.ACCS.ZS',
-                               start = 2010, end = 2010)
+library(gganimate)
+library(transformr)
 
 ```
 
-## Introdução a variável
-
-**Acesso à Eletricidade (% da População)**\
-
-A variável `EG.ELC.ACCS.ZS` representa o percentual da população com acesso à eletricidade em um determinado país e ano. É uma métrica essencial para avaliar o nível de desenvolvimento e a infraestrutura de um país, impactando diretamente a qualidade de vida, o desenvolvimento econômico e a capacidade de acesso a serviços essenciais como educação e saúde.
-
-## Gráfico geral
-
-### Visão geral Global ao longo do tempo
-
-Este gráfico apresenta a evolução do acesso à eletricidade ao longo do tempo, comparando o Brasil com o restante do mundo. O Brasil é destacado em verde escuro, enquanto os outros países aparecem em cinza claro. Essa abordagem permite visualizar como o Brasil tem avançado em relação ao resto do mundo, identificando padrões globais e as particularidades do Brasil nesse contexto.
 
 ```{r}
-#| label: accesstoelectricity
+#| label: animated-ipca
 #| warning: false
 #| echo: false
 
-accesstoelectricity$color <- ifelse(accesstoelectricity$country == "Brazil", "Brazil", "Other")
+# Obter a série do BCB
+meu.id <- c(divida = 17414)
 
-# Filtra o primeiro ano com dados
-first_year <- min(accesstoelectricity$year[!is.na(accesstoelectricity$EG.ELC.ACCS.ZS)])
-filtered_data <- accesstoelectricity %>% filter(year >= first_year)
+df.bcb <- gbcbd_get_series(id = meu.id,
+                           first.date = '2000-01-01',
+                           last.date = Sys.Date(),
+                           format.data = 'long',
+                           use.memoise = TRUE,
+                           cache.path = tempdir(),
+                           do.parallel = FALSE)
 
-# Gráfico com fundo preto
-grafelectricity <- ggplot(filtered_data, aes(x = year, y = EG.ELC.ACCS.ZS, group = country)) +
-  # Linhas dos outros países
-  geom_line(data = subset(filtered_data, color == "Other"),
-            aes(group = country),
-            color = "#808080", size = 0.8) +  # cinza mais escuro para fundo preto
-  # Linha do Brasil
-  geom_line(data = subset(filtered_data, color == "Brazil"),
-            aes(group = country),
-            color = "darkgreen", size = 1.2) +
-  ggtitle("Access to Electricity Over Time") +
-  labs(x = "Year", y = "Access to Electricity (% of Population)") +
-  theme_minimal(base_family = "sans") +
-  theme(
-    plot.background = element_rect(fill = "black", color = NA),
-    panel.background = element_rect(fill = "black", color = NA),
-    panel.grid.major = element_line(color = "#444444"),
-    panel.grid.minor = element_line(color = "#333333"),
-    plot.title = element_text(hjust = 0.5, color = "white", size = 14),
-    axis.title = element_text(color = "white"),
-    axis.text = element_text(color = "white"),
-    legend.position = "none"
-  )
-
-# Exibe o gráfico
-print(grafelectricity)
-```
-
-## Gráfico de série temporal
-
-**Progresso do Acesso à Eletricidade no Brasil**\
-
-Este gráfico mostra a evolução do acesso à eletricidade especificamente no Brasil ao longo dos anos. Ele permite observar o progresso do país em termos de infraestrutura elétrica, destacando os avanços e possíveis lacunas ao longo do tempo. O gráfico é uma representação clara da evolução de políticas públicas e do crescimento da infraestrutura elétrica nacional.
-
-```{r}
-#| label: accesstoelectricitybr
-#| warning: false 
-#| echo: false  
- 
-grafelectricitybr <- ggplot(accesstoelectricitybr, 
-                            aes(x = year, y = EG.ELC.ACCS.ZS)) +
-  geom_line(color = "darkgreen", size = 1.2) +  # Linha verde escura
-  ggtitle("Access to Electricity - Brazil") +
-  labs(x = "Year", y = "Access to Electricity (% of Population)") +
+# Gráfico animado com gganimate
+grafico_divida <- ggplot(df.bcb, aes(x = ref.date, y = value)) +
+  geom_line(color = "darkgreen") +
+  geom_point(color = "white", size = 2) +
+  labs(
+    title = 'Data: {frame_time}',
+    subtitle = 'Série histórica (código 17414) - Banco Central do Brasil',
+    x = 'Data', y = 'Valor (%)'
+  ) +
   theme_minimal(base_family = "sans") +
   theme(
     plot.background = element_rect(fill = "black", color = NA),
@@ -101,40 +52,14 @@ grafelectricitybr <- ggplot(accesstoelectricitybr,
     plot.title = element_text(hjust = 0.5, color = "white", size = 14),
     axis.title = element_text(color = "white"),
     axis.text = element_text(color = "white")
-  )
+  ) +
+  transition_time(ref.date) +
+  ease_aes('linear')
 
-# Exibe o gráfico
-print(grafelectricitybr)
+# Exibir animação
+animate(grafico_divida, width = 800, height = 600, fps = 20)
 
-```
+# (Opcional) salvar o gif
+# anim_save("divida_animado.gif")
 
-## Gráfico com dados de 2010
-
-**Acesso à Eletricidade no Brasil em 2010**\
-
-Este gráfico foca exclusivamente no ano de 2010, mostrando o percentual da população brasileira com acesso à eletricidade nesse ano. Ele fornece uma visão detalhada e pontual sobre a situação de acesso à eletricidade no Brasil naquele período específico. Essa análise é importante para contextualizar o Brasil dentro de um marco temporal específico e avaliar o impacto das políticas públicas naquele momento.
-
-```{r}
-#| label: accesstoelectricity2010 
-#| warning: false  
-#| echo: false      
-  
-grafelectricity2010 <- ggplot(accesstoelectricity2010, 
-                              aes(x = year, y = EG.ELC.ACCS.ZS)) +
-  geom_line(color = "darkgreen", size = 1.2) +  # Linha verde escura
-  ggtitle("Access to Electricity in 2010") +
-  labs(x = "Year", y = "Access to Electricity (% of Population)") +
-  theme_minimal(base_family = "sans") +
-  theme(
-    plot.background = element_rect(fill = "black", color = NA),
-    panel.background = element_rect(fill = "black", color = NA),
-    panel.grid.major = element_line(color = "#444444"),
-    panel.grid.minor = element_line(color = "#333333"),
-    plot.title = element_text(hjust = 0.5, color = "white", size = 14),
-    axis.title = element_text(color = "white"),
-    axis.text = element_text(color = "white")
-  )
-
-# Exibindo o gráfico
-print(grafelectricity2010)
 ```
