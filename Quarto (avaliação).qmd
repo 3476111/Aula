@@ -1,0 +1,70 @@
+---
+title: "Guilherme Burgarelli"
+format:
+  html:
+    theme: darkly
+editor: visual
+---
+
+```{r}
+#| label: load-packages
+#| include: false
+
+library(GetBCBData)
+library(tidyverse)
+library(gganimate)
+library(transformr)
+library(gifski)
+
+```
+
+```{r}
+#| label: animated-divida-4503
+#| warning: false
+#| echo: false
+
+meu.id <- c(divida_pib = 4503)
+
+df.bcb <- gbcbd_get_series(
+  id = meu.id,
+  first.date = as.Date("2000-01-01"),
+  last.date = Sys.Date(),
+  format.data = "long",
+  use.memoise = TRUE,
+  cache.path = tempdir(),
+  do.parallel = FALSE
+)
+
+df.bcb <- df.bcb %>%
+  mutate(ref.date = as.Date(ref.date)) %>%
+  filter(!is.na(ref.date), !is.na(value))
+
+grafico_divida <- ggplot(df.bcb, aes(x = ref.date, y = value)) +
+  geom_line(color = "darkgreen", size = 1.2) +
+  labs(
+    title = 'Dívida Bruta (% do PIB) - Data: {frame_along}',
+    subtitle = 'Série histórica (Código 4503) - Banco Central do Brasil',
+    x = 'Ano', y = 'Valor (%)'
+  ) +
+  theme_minimal() +
+  theme(
+    plot.background = element_rect(fill = "black"),
+    panel.background = element_rect(fill = "black"),
+    panel.grid.major = element_line(color = "#444444"),
+    panel.grid.minor = element_line(color = "#333333"),
+    plot.title = element_text(hjust = 0.5, color = "white"),
+    axis.title = element_text(color = "white"),
+    axis.text = element_text(color = "white")
+  ) +
+  transition_reveal(ref.date)
+
+anim_save("divida_pib_4503.gif", animation = grafico_divida)
+```
+
+## Introdução a variável
+
+**Divida Bruta (Governo Federal e Banco Central do PIB):**
+
+O gráfico a seguir mostra de forma animada a divida bruta do Governo Federal e do Banco Central em relação com o PIB do país nos últimos anos, mostrando que a divida deu uma escalada constante em relação com últimos anos da mesma.
+
+![](divida_pib_4503.gif)
