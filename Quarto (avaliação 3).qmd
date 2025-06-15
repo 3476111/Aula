@@ -1,0 +1,99 @@
+---
+title: "Guilherme Burgarelli e Gabrielle Mariana Moreira"
+format:
+  html:
+    theme: darkly
+editor: visual
+---
+
+```{r}
+#| label: load-packages
+#| include: false
+
+# Pacotes
+library(tidyverse)
+library(WDI)
+library(gganimate)
+library(rnaturalearth)
+library(rnaturalearthdata)
+library(sf)
+library(transformr)
+library(gifski)
+
+# Indicador desejado (podes trocar aqui)
+indicator <- c("Adolescents out of school (% of lower secondary school age)" = "SE.SEC.UNER.LO.ZS")
+name_indicator <- "Adolescentes fora da escola (% da idade do ensino secundário inferior)"
+source_indicator <- "World Bank"
+
+# Dados WDI
+dados <- WDI(indicator, country = "all", start = 1990, end = 2019)
+
+# Mapa base
+mapa <- ne_countries(returnclass = "sf")
+
+# Dados combinados
+dados_mapa <- mapa %>%
+  left_join(dados, by = c("iso_a2" = "iso2c")) %>%
+  filter(iso_a2 != "ATA")  # remove Antártida
+
+```
+
+## 📘 Introdução e História da Variável
+
+A variável **“Adolescentes fora da escola (% da idade adequada para o ensino secundário inferior)”**, disponibilizada pelo Banco Mundial com o código **`SE.SEC.UNER.LO.ZS`**, mede a **proporção de jovens em idade escolar adequada que não estão matriculados no ensino secundário inferior** (geralmente entre os 12 e 15 anos, dependendo do país).
+
+Esta métrica tem ganhado destaque nos últimos anos como um **indicador crítico do acesso à educação** e do cumprimento de direitos básicos de crianças e adolescentes. Estar fora da escola nesta faixa etária compromete não só a formação educacional do jovem, mas também **impacta negativamente a mobilidade social, o desenvolvimento humano e a estabilidade econômica futura**.
+
+Historicamente, a taxa de adolescentes fora da escola era elevada em várias partes do mundo, especialmente em países de baixa e média renda, devido a fatores como:
+
+-    Pobreza familiar e necessidade de trabalho infantil
+
+-    Falta de infraestrutura escolar
+
+-    Discriminação de género ou étnica
+
+-    Conflitos armados ou instabilidade social
+
+Nos últimos 30 anos, diversas iniciativas globais, como o **“Education for All”** da UNESCO e os **Objetivos de Desenvolvimento Sustentável (ODS)** das Nações Unidas — especialmente o **ODS 4 (Educação de Qualidade)** — promoveram políticas públicas e investimentos para reduzir esta exclusão.
+
+A análise histórica desta variável permite observar os avanços educacionais em diferentes regiões, bem como identificar **desigualdades persistentes**. Sua visualização animada ao longo do tempo contribui para uma melhor compreensão do progresso (ou retrocesso) global na garantia do direito à educação.
+
+```{r}
+#| label: animated-divida-4503
+#| warning: false
+#| echo: false
+
+#| label: grafico-animado
+#| fig.width: 10
+#| fig.height: 6
+#| warning: false
+
+# Gráfico animado com fundo azul petróleo
+ggplot(dados_mapa, aes(fill = `Adolescents out of school (% of lower secondary school age)`)) +
+  geom_sf() +
+  scale_fill_gradientn(
+    colours = c("#006837", "#e6b800", "#8b0000"),
+    na.value = "#3a3a3a",
+    labels = scales::percent_format(scale = 1)
+  ) +
+  theme_minimal() +
+  theme(
+  panel.background = element_rect(fill = "#002244", color = NA),
+  plot.background = element_rect(fill = "#002244", color = NA),
+  panel.border = element_blank(),
+  legend.position = "bottom",
+  text = element_text(color = "white"),
+  axis.text = element_blank(),
+  axis.title = element_blank(),
+  panel.grid = element_blank(),
+  plot.margin = margin(0, 0, 0, 0, unit = "pt")
+) +
+  labs(
+    title = paste0(name_indicator, " - {closest_state}"),
+    fill = NULL,
+    caption = paste0("Fonte: ", source_indicator)
+  ) +
+  transition_states(year, transition_length = 3, state_length = 1)
+
+
+```
